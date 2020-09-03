@@ -24,16 +24,47 @@ import java.nio.ByteOrder;
 
 abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
 
+    /**
+     * Recycler 处理器，用于回收对象
+     */
     private final Recycler.Handle<PooledByteBuf<T>> recyclerHandle;
-
+    /**
+     * chunk对象
+     */
     protected PoolChunk<T> chunk;
+
+    /**
+     * 从 Chunk 对象中分配的内存块所处的位置
+     */
     protected long handle;
+
+    /**
+     * 内存空间。具体什么样的数据，通过子类设置泛型。
+     */
     protected T memory;
+
+    /**
+     *{@link #memory} 开始位置
+     */
     protected int offset;
+
+    /**
+     *容量
+     */
     protected int length;
+
+    /**
+     * 占用 {@link #memory} 的大小
+     */
     int maxLength;
+
     PoolThreadCache cache;
+
     ByteBuffer tmpNioBuf;
+
+    /**
+     * ByteBuf 分配器对象
+     */
     private ByteBufAllocator allocator;
 
     @SuppressWarnings("unchecked")
@@ -105,6 +136,8 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
             } else if (newCapacity < length) {
                 if (newCapacity > maxLength >>> 1) {
                     if (maxLength <= 512) {
+                        //当newCapacity > maxLength >>> 1,若newCapacity > maxLength - 16则newCapacity>16
+                        // 因为 Netty SubPage 最小是 16 ，如果小于等 16 ，无法缩容。
                         if (newCapacity > maxLength - 16) {
                             length = newCapacity;
                             setIndex(Math.min(readerIndex(), newCapacity), Math.min(writerIndex(), newCapacity));

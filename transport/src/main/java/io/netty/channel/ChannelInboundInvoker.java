@@ -15,6 +15,9 @@
  */
 package io.netty.channel;
 
+/**
+ * 当channel的一些状态发生变化的时候，会调用里面的一些对应的方法
+ */
 public interface ChannelInboundInvoker {
 
     /**
@@ -24,6 +27,7 @@ public interface ChannelInboundInvoker {
      * called of the next  {@link ChannelInboundHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      */
+    //当当前的channel注册到eventloop后会调用，最终会调用链表的第一个ChannelStateHandler的channelRegistered函数
     ChannelInboundInvoker fireChannelRegistered();
 
     /**
@@ -33,6 +37,7 @@ public interface ChannelInboundInvoker {
      * called of the next  {@link ChannelInboundHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      */
+    //当所属的channel unregister的时候调用
     ChannelInboundInvoker fireChannelUnregistered();
 
     /**

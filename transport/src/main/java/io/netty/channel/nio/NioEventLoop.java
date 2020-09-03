@@ -59,6 +59,11 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
     private static final int CLEANUP_INTERVAL = 256; // XXX Hard-coded value, but won't need customization.
 
+    /**
+     * Netty在该类中对Java NIO的Selector做了优化，
+     * 可以通过设置系统属性io.netty.noKeySetOptimization进行修改，
+     * 设置为true、yes或者1关闭优化，设置为false、no或者0开启优化，默认开启优化。
+     */
     private static final boolean DISABLE_KEY_SET_OPTIMIZATION =
             SystemPropertyUtil.getBoolean("io.netty.noKeySetOptimization", false);
 
@@ -110,7 +115,10 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     /**
      * The NIO {@link Selector}.
      */
+    //有优化过的
     private Selector selector;
+
+    //未优化过的
     private Selector unwrappedSelector;
     private SelectedSelectionKeySet selectedKeys;
 
@@ -125,7 +133,14 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     private final AtomicBoolean wakenUp = new AtomicBoolean();
 
     private final SelectStrategy selectStrategy;
-
+    /**
+     * 控制io任务和非io任务执行时间比例
+     *
+     * I/O任务
+     * 即selectionKey中ready的事件，如accept、connect、read、write等，由processSelectedKeys方法触发。
+     * 非IO任务
+     * 添加到taskQueue中的任务，如register0、bind0等任务，由runAllTasks方法触发。
+     */
     private volatile int ioRatio = 50;
     private int cancelledKeys;
     private boolean needsToSelectAgain;
@@ -164,15 +179,18 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     private SelectorTuple openSelector() {
         final Selector unwrappedSelector;
         try {
+            //获取selector
             unwrappedSelector = provider.openSelector();
         } catch (IOException e) {
             throw new ChannelException("failed to open a new selector", e);
         }
 
         if (DISABLE_KEY_SET_OPTIMIZATION) {
+            //返回SelectorTuple 其中都是为优化的selector
             return new SelectorTuple(unwrappedSelector);
         }
 
+        //获取sun.nio.ch.SelectorImpl
         Object maybeSelectorImplClass = AccessController.doPrivileged(new PrivilegedAction<Object>() {
             @Override
             public Object run() {
@@ -204,6 +222,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             @Override
             public Object run() {
                 try {
+                    //获取指字段
                     Field selectedKeysField = selectorImplClass.getDeclaredField("selectedKeys");
                     Field publicSelectedKeysField = selectorImplClass.getDeclaredField("publicSelectedKeys");
 
@@ -223,7 +242,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         }
                         // We could not retrieve the offset, lets try reflection as last-resort.
                     }
-
+                    //字段设置为可访问
                     Throwable cause = ReflectionUtil.trySetAccessible(selectedKeysField, true);
                     if (cause != null) {
                         return cause;
@@ -233,7 +252,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         return cause;
                     }
 
+
                     selectedKeysField.set(unwrappedSelector, selectedKeySet);
+
                     publicSelectedKeysField.set(unwrappedSelector, selectedKeySet);
                     return null;
                 } catch (NoSuchFieldException e) {

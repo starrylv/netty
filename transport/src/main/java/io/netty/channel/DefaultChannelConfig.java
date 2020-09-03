@@ -322,8 +322,10 @@ public class DefaultChannelConfig implements ChannelConfig {
     public ChannelConfig setAutoRead(boolean autoRead) {
         boolean oldAutoRead = AUTOREAD_UPDATER.getAndSet(this, autoRead ? 1 : 0) == 1;
         if (autoRead && !oldAutoRead) {
+            //恢复重启开启接受新的客户端连接
             channel.read();
         } else if (!autoRead && oldAutoRead) {
+            //关闭接受新的客户端连接
             autoReadCleared();
         }
         return this;

@@ -135,6 +135,7 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
 
     @Override
     protected void afterRunningAllTasks() {
+        //执行tailtask任务
         runAllTasksFrom(tailTasks);
     }
 

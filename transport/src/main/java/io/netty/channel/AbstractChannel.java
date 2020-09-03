@@ -1068,7 +1068,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
      * Sub-classes may override this method
      */
     protected void doRegister() throws Exception {
-        // NOOP
+        // noop
     }
 
     /**

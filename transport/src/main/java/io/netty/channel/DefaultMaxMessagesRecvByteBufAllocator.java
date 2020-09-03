@@ -86,10 +86,15 @@ public abstract class DefaultMaxMessagesRecvByteBufAllocator implements MaxMessa
      */
     public abstract class MaxMessageHandle implements ExtendedHandle {
         private ChannelConfig config;
+        //每个读循环允许的最大读取次数
         private int maxMessagePerRead;
+        //已经读取的次数
         private int totalMessages;
+        //已经读取的大小
         private int totalBytesRead;
+        //尝试读取的大小
         private int attemptedBytesRead;
+        //上次读取的大小
         private int lastBytesRead;
         private final boolean respectMaybeMoreData = DefaultMaxMessagesRecvByteBufAllocator.this.respectMaybeMoreData;
         private final UncheckedBooleanSupplier defaultMaybeMoreSupplier = new UncheckedBooleanSupplier() {
@@ -137,8 +142,19 @@ public abstract class DefaultMaxMessagesRecvByteBufAllocator implements MaxMessa
             return continueReading(defaultMaybeMoreSupplier);
         }
 
+        /**
+         * ① ChannelConfig的设置为可自动读取。即，autoRead属性为1。
+         * ② maybeMoreDataSupplier.get()
+         * 返回为true，这个我们在上面已经讨论过了。也就是当‘最近一次读操作所期望读取的字节数’与‘最近一次读操作真实读取的字节数’一样，则表示当前可能还有数据等待被读取。则就会返回true。
+         * ③ totalMessages < maxMessagePerRead ： 已经读取的消息次数 < 一个读循环最大能读取消息的次数
+         * ④ totalBytesRead > 0 ：因为totalBytesRead是int类型，所以totalBytesRead的最大值是’Integer.MAX_VALUE’(即，2147483647)
+         * 。所以，也限制了一个读循环最大能读取的字节数为2147483647。
+         * @param maybeMoreDataSupplier A supplier that determines if there maybe more data to read.
+         * @return
+         */
         @Override
         public boolean continueReading(UncheckedBooleanSupplier maybeMoreDataSupplier) {
+
             return config.isAutoRead() &&
                    (!respectMaybeMoreData || maybeMoreDataSupplier.get()) &&
                    totalMessages < maxMessagePerRead &&

@@ -144,15 +144,40 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
         }
     };
 
+    /**
+     * 0 - 初始化
+     * 1 - 调用 {@link #decode(ChannelHandlerContext, ByteBuf, List)} 方法中，正在进行解码
+     * 2 - 准备移除
+     */
     private static final byte STATE_INIT = 0;
     private static final byte STATE_CALLING_CHILD_DECODE = 1;
     private static final byte STATE_HANDLER_REMOVED_PENDING = 2;
 
+    /**
+     * 已累计的ByteBuf
+     */
     ByteBuf cumulation;
+
+    /**
+     * 累加器
+     */
     private Cumulator cumulator = MERGE_CUMULATOR;
+
+    /**
+     * 是否每次只解码一条消息，默认为 false
+     */
     private boolean singleDecode;
+
+    /**
+     * 是否解码到消息
+     */
     private boolean decodeWasNull;
+
+    /**
+     * 是否首次读取
+     */
     private boolean first;
+
     /**
      * A bitmask where the bits are defined as
      * <ul>
@@ -534,12 +559,17 @@ public abstract class ByteToMessageDecoder extends ChannelInboundHandlerAdapter 
 
     /**
      * Cumulate {@link ByteBuf}s.
+     * 累加器
      */
     public interface Cumulator {
         /**
          * Cumulate the given {@link ByteBuf}s and return the {@link ByteBuf} that holds the cumulated bytes.
          * The implementation is responsible to correctly handle the life-cycle of the given {@link ByteBuf}s and so
          * call {@link ByteBuf#release()} if a {@link ByteBuf} is fully consumed.
+         * @param alloc 分配器
+         * @param cumulation 当前累积结果
+         * @param in 当前读取( 输入 ) ByteBuf
+         * @return ByteBuf 新的累积结果
          */
         ByteBuf cumulate(ByteBufAllocator alloc, ByteBuf cumulation, ByteBuf in);
     }

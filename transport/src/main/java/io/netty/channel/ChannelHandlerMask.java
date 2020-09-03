@@ -67,7 +67,7 @@ final class ChannelHandlerMask {
     /**
      * Return the {@code executionMask}.
      */
-    static int mask(Class<? extends ChannelHandler> clazz) {
+    static int  mask(Class<? extends ChannelHandler> clazz) {
         // Try to obtain the mask from the cache first. If this fails calculate it and put it in the cache for fast
         // lookup in the future.
         Map<Class<? extends ChannelHandler>, Integer> cache = MASKS.get();

@@ -28,6 +28,13 @@ public final class UnpooledByteBufAllocator extends AbstractByteBufAllocator imp
 
     private final UnpooledByteBufAllocatorMetric metric = new UnpooledByteBufAllocatorMetric();
     private final boolean disableLeakDetector;
+
+    /**
+     * 不使用 `io.netty.util.internal.Cleaner` 释放 Direct ByteBuf
+     *
+     * @see UnpooledUnsafeNoCleanerDirectByteBuf
+     * @see InstrumentedUnpooledUnsafeNoCleanerDirectByteBuf
+     */
     private final boolean noCleaner;
 
     /**

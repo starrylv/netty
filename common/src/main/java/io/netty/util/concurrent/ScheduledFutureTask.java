@@ -123,7 +123,9 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
         assert executor().inEventLoop();
         try {
             if (periodNanos == 0) {
+                //设置不可取消
                 if (setUncancellableInternal()) {
+                    //执行任务
                     V result = task.call();
                     setSuccessInternal(result);
                 }
@@ -132,6 +134,7 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
                 if (!isCancelled()) {
                     task.call();
                     if (!executor().isShutdown()) {
+                        //计算下次执行时间
                         long p = periodNanos;
                         if (p > 0) {
                             deadlineNanos += p;
@@ -139,6 +142,7 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
                             deadlineNanos = nanoTime() - p;
                         }
                         if (!isCancelled()) {
+                            //重新加入到任务队列中执行
                             // scheduledTaskQueue can never be null as we lazy init it before submit the task!
                             Queue<ScheduledFutureTask<?>> scheduledTaskQueue =
                                     ((AbstractScheduledEventExecutor) executor()).scheduledTaskQueue;
